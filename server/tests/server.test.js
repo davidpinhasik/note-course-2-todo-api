@@ -295,3 +295,25 @@ describe('POST /users/login', () => {
       });
   });
 });
+
+describe('DELETE /users/me/token', () => {
+  it('should remove auth token on logout', (done) => {
+    // DELETE /users/me/tokens
+    // set x-auth to tokens
+    //  expect a 200
+    // make async end call to async assertion to find user, verify that tokens array is length 0
+    request(app)
+      .delete('/users/me/token')
+      .set('x-auth', users[0].tokens[0].token)
+      .expect(200)
+      .end((err, res) => {
+        if (err) {
+          return done(err);
+        };
+        User.findById(users[0]._id).then((user) => {
+          expect(user.tokens.length).toBe(0);
+          done();
+        }).catch((e) => done(e));
+      });
+  });
+});
