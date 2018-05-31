@@ -55,7 +55,6 @@ UserSchema.methods.generateAuthToken = function () {
 UserSchema.statics.findByToken = function (token) {
   var User = this;
   var decoded;
-
   try {
     decoded = jwt.verify(token, 'abc123');
   } catch (e) {
@@ -64,13 +63,39 @@ UserSchema.statics.findByToken = function (token) {
       //   reject();
       // })
   }
-
   return User.findOne({
     '_id': decoded._id,
     'tokens.token': token,
     'tokens.access': 'auth'
   });
+};
 
+UserSchema.statics.findByCredentials = function (email, password) {
+  // console.log(`Strting findByCredentials, email: ${email}, password: ${password}`);
+  var User = this;
+  return User.findOne({email}).then((user) => {
+    // console.log('Entering success path of then()');
+    if (!user) {
+      // console.log('no user found, returning Promise.reject()');
+      return Promise.reject()
+    };
+    // console.log(`user found. about to create new promise for compare: email: ${user.email}, password: ${user.password}`);
+    return new Promise((resolve, reject) => {
+      bcrypt.compare(password, user.password, (err, res) => {
+        // console.log('compare was called');
+        if (!res) {
+          // console.log('compare return false, will call reject()');
+          reject();
+        };
+        // console.log('compare was true, will call resolve(user)');
+        resolve(user);
+      });
+    });
+
+  }).catch((err) => {
+      // console.log('error was caught, calling Promise.reject()');
+      return Promise.reject()
+    });
 };
 
 UserSchema.pre('save', function (next) {
